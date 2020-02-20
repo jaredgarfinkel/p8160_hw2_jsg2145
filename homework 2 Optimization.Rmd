@@ -1,0 +1,89 @@
+---
+title: "Homework 2 on Newton's methods"
+author: "Leave your name and uni here"
+date: "Due: 03/18/2020, Wednesday, by 1pm"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(modelr)
+library(viridis)
+knitr::opts_chunk$set(
+	echo = TRUE,
+	warning = FALSE,
+	fig.width = 8, 
+  fig.height = 6,
+  out.width = "90%"
+)
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
+theme_set(theme_minimal() + theme(legend.position = "bottom"))
+```
+
+# Problem 1
+Design an optmization algorithm to find the minimum of the continuously differentiable function $f(x) =-e^{-1}\sin(x)$ on the closed interval $[0,1.5]$. Write out your algorithm and implement it into \textbf{R}.
+
+
+# Answer: your answer starts here...
+
+```{r }
+#R codes:
+```
+
+# Problem 2
+The Poisson distribution is often used to model ``count'' data ---
+e.g., the number of events in a given time period.  
+The Poisson regression model states that
+$$Y_i \sim \textrm{Poisson}(\lambda_i),$$
+where
+$$\log \lambda_i = \alpha + \beta x_i $$
+ for some explanatory variable
+$x_i$.  The question is how to estimate $\alpha$ and $\beta$ given a
+set of independent data $(x_1, Y_1), (x_2, Y_2), \ldots, (x_n, Y_n)$.
+\begin{enumerate}
+\item Modify the Newton-Raphson function from the class notes to include
+a step-halving step.
+\item Further modify this function to ensure that the direction of the
+step is an ascent direction.   (If it is not, the program should take appropriate
+action.)
+\item Write code to apply the resulting modified Newton-Raphson function
+to compute maximum likelihood estimates for $\alpha$ and $\beta$
+in the Poisson regression setting.
+\end{enumerate}
+
+\vskip 5mm
+\noindent
+The Poisson distribution is given by
+$$P(Y=y) = \frac{\lambda^y e^{-\lambda}}{y!}$$
+for $\lambda > 0$. 
+
+
+# Answer: your answer starts here...
+
+```{r }
+#R codes:
+```
+
+
+\paragraph{problem 3}
+
+\vskip 10pt
+Consider the ABO blood type data, where you have $N_{\mbox{obs}} = (N_A,N_B,N_O,N_{AB}) = ( 26, 27, 42, 7)$.
+
+\begin{itemize}
+\item design an EM algorithm to estimate  the allele frequencies, $P_A$, $P_B$ and $P_O$; and 
+
+\item Implement your algorithms in R, and present your results..
+\end{itemize}
+
+# Answer: your answer starts here...
+
+```{r }
+#R codes:
+```
+
