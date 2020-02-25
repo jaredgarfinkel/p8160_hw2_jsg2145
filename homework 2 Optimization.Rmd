@@ -26,14 +26,60 @@ theme_set(theme_minimal() + theme(legend.position = "bottom"))
 ```
 
 # Problem 1
-Design an optmization algorithm to find the minimum of the continuously differentiable function $f(x) =-e^{-1}\sin(x)$ on the closed interval $[0,1.5]$. Write out your algorithm and implement it into \textbf{R}.
+Design an optimization algorithm to find the minimum of the continuously differentiable function $f(x) =-e^{-1}\sin(x)$ on the closed interval $[0,1.5]$. Write out your algorithm and implement it into \textbf{R}.
 
 
 # Answer: your answer starts here...
 
 ```{r }
 #R codes:
+
+f = function(x){
+  return(-sin(x)*exp(-x))
+}
+
+
+optimize(f, interval = c(0, 1.5))
 ```
+
+```{r}
+curve(f, from = 0, to = 1.5)
+```
+
+
+```{r}
+w = .618
+a =  0
+b = 1.5
+tol = 1e-6
+i = 0  # iteration index
+x1 = (1 - w) * (b - a) + a
+x2 = x1 + w * (b - a) * (1 - w)
+res = c(a, b, x1, x2)
+
+findmin = function() {
+  while (abs(b - a) > tol) {
+    i <- i + 1
+    if (f(b) > f(a)) {
+      b <- x2
+      x1 <- (1 - w) * (b - a) + a
+      x2 <- x1 + w * (b - a) * (1 - w)
+    }
+    else {
+      a <- x1
+      x1 <- x2
+      x2 <- x1 + w * (b - a) * (1 - w)
+    }
+    res <- rbind(res, c(a, b, x1, x2))
+  }
+
+    return(res)
+}
+
+min = last(findmin())
+```
+
+The minimum according to the golden ratio search method is `r round(min, digits = 3)`. This closely approximates the result of optimize(), `r optimize(f, interval = c(0, 1.5))$minimum %>% round(digits =3)`.
 
 # Problem 2
 The Poisson distribution is often used to model ``count'' data ---
