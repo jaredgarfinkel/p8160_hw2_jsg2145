@@ -51,7 +51,7 @@ curve(f, from = 0, to = 1.5)
 w = .618
 a =  0
 b = 1.5
-tol = 1e-6
+tol = 1e-10
 i = 0  # iteration index
 x1 = (1 - w) * (b - a) + a
 x2 = x1 + w * (b - a) * (1 - w)
@@ -70,11 +70,13 @@ findmin = function() {
       x1 <- x2
       x2 <- x1 + w * (b - a) * (1 - w)
     }
-    res <- rbind(res, c(a, b, x1, x2))
+    res <- rbind(res, c(i, a, b, x1, x2))
   }
 
     return(res)
 }
+
+findmin()
 
 min = last(findmin())
 ```
@@ -113,6 +115,39 @@ for $\lambda > 0$.
 
 ```{r }
 #R codes:
+
+poissonstuff <- function(dat, betavec) {
+  log_lambda <- betavec[1] + betavec[2] * dat$x
+  lambda <- exp(log_lambda)
+  loglik <- sum(dat$y * log_lambda - lambda - log(factorial(dat$y)))
+  grad <- c(sum(dat$y - lambda), sum(dat$x * lambda))
+  Hess <- -matrix(c((-1) * nrow(dat) * lambda),
+                    rep(sum(dat$x * lambda), 2),
+                    sum((-1) * dat$x^2 * lambda), ncol = 2)
+  return(list(loglik = loglik, grad = grad, Hess = Hess))
+}
+
+NewtonRaphson <- function(dat, func, start, tol=1e-10, maxiter = 200) {
+  i <- 0
+  cur <- start
+  stuff <- func(dat, cur)
+  res <- c(0, stuff$loglik, cur)
+  prevloglik <- -Inf      # To make sure it iterates
+  while (i < maxiter && abs(stuff$loglik - prevloglik) > tol) {
+    i <- i + 1
+    prevloglik <- stuff$loglik
+    Hess <- stuff$Hess
+    prev <- cur
+    grad <- stuff$grad
+    if (t(grad) %*% Hess )
+    cur <- prev - solve(stuff$Hess) %*% stuff$grad
+    stuff <- func(dat, cur)        # log-lik, gradient, Hessian
+    res <- rbind(res, c(i, stuff$loglik, cur))# Add current values to results matrix
+  }
+  return(res)
+}
+
+
 ```
 
 
