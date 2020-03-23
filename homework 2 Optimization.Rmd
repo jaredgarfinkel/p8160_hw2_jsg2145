@@ -117,21 +117,80 @@ for $\lambda > 0$.
 #R codes:
 
 poissonstuff <- function(dat, betavec) {
-  log_lambda <- betavec[1] + betavec[2] * dat$x
+  alpha = betavec[1]
+  beta = betavec[2]
+  log_lambda <- alpha + beta * dat$x
   lambda <- exp(log_lambda)
   loglik <- sum(dat$y * log_lambda - lambda - log(factorial(dat$y)))
-  grad <- c(sum(dat$y - lambda), sum(dat$x * lambda))
-  Hess <- -matrix(c((-1) * nrow(dat) * lambda),
-                    rep(sum(dat$x * lambda), 2),
-                    sum((-1) * dat$x^2 * lambda), ncol = 2)
+  grad <- c(sum(dat$y * dat$x - dat$x * lambda), 
+            sum(dat$y - lambda))
+  Hess <- matrix((-1) * c((-1) * sum(dat$x^2 * lambda),
+                    rep((-1) * sum(dat$x * lambda), 2),
+                    (-1) * sum(lambda)), ncol = 2)
   return(list(loglik = loglik, grad = grad, Hess = Hess))
 }
+```
 
-NewtonRaphson <- function(dat, func, start, tol=1e-10, maxiter = 200) {
+```{r}
+set.seed(22)
+n <- 5000
+truebeta <- c(1, .03)
+x <- rnorm(n)
+lambda <- exp(truebeta[1] + truebeta[2] * x)
+y = rpois(n, lambda)
+dat = list(x=x, y=y)
+```
+
+
+```{r}
+NewtonRaphson <- function(dat, func, start, tol = 1e-5, maxiter = 200) {
   i <- 0
   cur <- start
   stuff <- func(dat, cur)
+  l = 1
+  prevloglik <- -Inf      # To make sure it iterates
+  res = c(0, stuff$loglik, cur)
+  while (i < maxiter && abs(stuff$loglik - prevloglik) > tol) {
+    i = i + 1
+    if (t(stuff$grad) %*% stuff$Hess %*% stuff$grad > 0) {
+      Hess = stuff$Hess - 3*diag(max(stuff$Hess), nrow(stuff$Hess))
+    }
+    else {
+      Hess = stuff$Hess
+    }
+    prev <- cur
+    grad <- stuff$grad
+    prevloglik <- stuff$loglik
+    cur = prev - l * solve(Hess) %*% grad
+    stuff = func(dat, cur)
+    res <- rbind(res, c(i, stuff$loglik, cur)) # Add current values to results matrix
+    while (stuff$loglik < prevloglik) {
+      i = i + 1
+      if (t(stuff$grad) %*% stuff$Hess %*% stuff$grad > 0) {
+        Hess = stuff$Hess - 3*diag(max(stuff$Hess), nrow(stuff$Hess))
+      }
+      else {
+        Hess = stuff$Hess
+      }
+      l = 0.5*l
+      cur <- prev - l * solve(Hess) %*% grad
+      stuff = func(dat, cur)
+      res = rbind(res, c(i, stuff$loglik, cur))
+    }
+  }
+  return(res)
+}
+```
+
+
+```{r, eval = FALSE}
+NewtonRaphson <- function(dat, func, start, tol = 1e-10, maxiter = 200) {
+  i <- 0
+  cur <- start
+  stuff <- func(dat, cur)
+  loglik <- stuff$loglik
   res <- c(0, stuff$loglik, cur)
+  l = 1
   prevloglik <- -Inf      # To make sure it iterates
   while (i < maxiter && abs(stuff$loglik - prevloglik) > tol) {
     i <- i + 1
@@ -139,14 +198,35 @@ NewtonRaphson <- function(dat, func, start, tol=1e-10, maxiter = 200) {
     Hess <- stuff$Hess
     prev <- cur
     grad <- stuff$grad
-    if (t(grad) %*% Hess )
-    cur <- prev - solve(stuff$Hess) %*% stuff$grad
+    cur <- prev - l * solve(Hess) %*% grad
+    stuff <- func(dat, cur)
+    if (t(grad) %*% Hess %*% grad > 0) {
+      Hess = Hess - 3*diag(max(Hess), nrow(Hess))
+    }
+    else {
+      Hess = Hess
+    }
+    cur = prev - l * t(Hess) %*% grad
+    stuff = func(dat, cur)
+    while (stuff$loglik < prevloglik) {
+    l = 0.5*l
+    i = i + 1 
+    prevloglik = stuff$loglik
+    Hess = stuff$Hess
+    prev = cur
+    grad = stuff$grad
+    cur <- prev - l * t(Hess) %*% grad
     stuff <- func(dat, cur)        # log-lik, gradient, Hessian
-    res <- rbind(res, c(i, stuff$loglik, cur))# Add current values to results matrix
+    }
+    res <- rbind(res, c(i, stuff$loglik, cur)) # Add current values to results matrix
   }
   return(res)
 }
+```
 
+```{r}
+NewtonRaphson(list(x=x, y=y), poissonstuff, start = c(1, -2))
+poissonstuff(list(x=x, y=y), c(1, -2))
 
 ```
 
