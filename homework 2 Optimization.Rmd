@@ -1,6 +1,6 @@
 ---
 title: "Homework 2 on Newton's methods"
-author: "Leave your name and uni here"
+author: "Jared Garfinkel jsg2145"
 date: "Due: 03/18/2020, Wednesday, by 1pm"
 output: github_document
 ---

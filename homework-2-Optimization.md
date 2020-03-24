@@ -1,6 +1,6 @@
 Homework 2 on Newton’s methods
 ================
-Leave your name and uni here
+Jared Garfinkel jsg2145
 Due: 03/18/2020, Wednesday, by 1pm
 
 # Problem 1
