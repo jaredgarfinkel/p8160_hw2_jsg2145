@@ -330,5 +330,147 @@ Consider the ABO blood type data, where you have
 # Answer: your answer starts here…
 
 ``` r
-#R codes:
+blood_dat = tibble(
+  obs = c(26, 27, 42, 7),
+  type = c("A", "B", "O", "AB")
+)
+
+pars = tibble(
+  p_o = .33,
+  p_a = .33,
+  p_b = .33
+)
+
+fpars = function(p_a = p_a, p_b = p_b, p_o = p_o){
+  pars = tibble(
+   p_o,
+   p_a,
+   p_b
+  )
+}
 ```
+
+``` r
+n_aa = function(df = blood_dat, pars){
+  df %>% 
+  filter(type == "A") %>%
+  pull(obs) %>% 
+  prod(., pars$p_a^2, (pars$p_a^2 + 2 * pars$p_a * pars$p_o)^(-1))
+}
+
+n_ao = function(df = blood_dat, pars){
+  df %>% 
+  filter(type == "A") %>%
+  pull(obs) %>% 
+  prod(., 2, pars$p_a, pars$p_o, (pars$p_a^2 + 2 * pars$p_a * pars$p_o)^(-1))
+}
+
+n_bb = function(df = blood_dat, pars){
+  df %>% 
+  filter(type == "B") %>%
+  pull(obs) %>% 
+  prod(., pars$p_b^2, (pars$p_a^2 + 2 * pars$p_b * pars$p_o)^(-1))
+}
+
+n_bo = function(df = blood_dat, pars){
+  df %>% 
+  filter(type == "B") %>%
+  pull(obs) %>% 
+  prod(., 2, pars$p_b, pars$p_o, (pars$p_a^2 + 2 * pars$p_b * pars$p_o)^(-1))
+}
+
+n_ab = blood_dat %>% 
+  filter(type == "AB") %>% 
+  pull(obs)
+
+n_oo = blood_dat %>% 
+  filter(type == "O") %>% 
+  pull(obs)
+```
+
+``` r
+fnobs = function(df = blood_dat, pars = pars) {
+  nobs = tibble(
+    N_AA = n_aa(blood_dat, pars),
+    N_AO = n_ao(blood_dat, pars),
+    N_BB = n_bb(blood_dat, pars),
+    N_BO = n_bo(blood_dat, pars),
+    N_AB = n_ab,
+    N_OO = n_oo
+  )
+  return(nobs)
+}
+
+nobs = fnobs(blood_dat, pars)
+```
+
+``` r
+nobs = tibble(
+  N_AA = n_aa(blood_dat, pars),
+  N_AO = n_ao(blood_dat, pars),
+  N_BB = n_bb(blood_dat, pars),
+  N_BO = n_bo(blood_dat, pars),
+  N_AB = n_ab,
+  N_OO = n_oo
+)
+```
+
+``` r
+lik = function(nobs, pars) {
+    loglik = nobs$N_AA * log(pars$p_a^2) + nobs$N_AO * log(2*pars$p_a*pars$p_o) + nobs$N_BB * log(pars$p_b^2) + nobs$N_BO * log(2*pars$p_b*pars$p_o) + nobs$N_AB*log(2*pars$p_a*pars$p_b) + nobs$N_OO * log(pars$p_o^2) + log(factorial(sum(nobs)))/prod(factorial(nobs$N_AA), factorial(nobs$N_AO), factorial(nobs$N_BB), factorial(nobs$N_BO), factorial(nobs$N_AB), factorial(nobs$N_OO))
+    return(loglik)
+}
+```
+
+``` r
+delta = function(df = blood_dat, nobs = nobs, pars = c(p_a = .33, p_b = .33, p_o = .33), tol = 1e-10, maxiter = 200){
+  i = 0
+  p_o = pars$p_o
+  p_b = pars$p_b
+  p_a = pars$p_a
+  prevpars = fpars(p_a, p_b, p_o)
+  prevloglik = -Inf
+  loglik = lik(nobs, pars)
+  prevnobs = fnobs(blood_dat, pars)
+  res = c(0, loglik, prevpars)
+  while (i < maxiter && abs(loglik - prevloglik) > tol) {
+    i = i + 1
+    prevloglik = loglik
+    prevnobs = nobs
+    lambda = (2) * sum(nobs)
+    p_a = (2 * prevnobs$N_AA + prevnobs$N_AO + prevnobs$N_AB)/(lambda)
+    p_b = (2 * prevnobs$N_BB + prevnobs$N_BO + prevnobs$N_AB)/(lambda)
+    p_o = (2 * prevnobs$N_OO + prevnobs$N_AO + prevnobs$N_BO)/(lambda)
+    pars = fpars(p_a, p_b, p_o)
+    nobs = fnobs(blood_dat, pars)
+    loglik = lik(nobs, pars)
+    res = rbind(res, c(i, loglik, pars))
+  }
+  return(res)
+}
+```
+
+``` r
+delta(blood_dat, nobs, pars)
+```
+
+    ##                  p_o       p_a       p_b      
+    ## res 0  -196.8239 0.33      0.33      0.33     
+    ##     1  -151.4549 0.5849673 0.2042484 0.2107843
+    ##     2  -148.1427 0.6319013 0.1802591 0.1878395
+    ##     3  -147.8275 0.6379783 0.1771892 0.1848325
+    ##     4  -147.7893 0.6387278 0.1768208 0.1844514
+    ##     5  -147.7842 0.638821  0.1767777 0.1844013
+    ##     6  -147.7835 0.638833  0.1767729 0.1843941
+    ##     7  -147.7834 0.6388347 0.1767725 0.1843929
+    ##     8  -147.7833 0.6388349 0.1767724 0.1843926
+    ##     9  -147.7833 0.638835  0.1767724 0.1843926
+    ##     10 -147.7833 0.638835  0.1767724 0.1843926
+    ##     11 -147.7833 0.638835  0.1767724 0.1843926
+    ##     12 -147.7833 0.638835  0.1767725 0.1843926
+    ##     13 -147.7833 0.638835  0.1767725 0.1843926
+    ##     14 -147.7833 0.638835  0.1767725 0.1843926
+    ##     15 -147.7833 0.638835  0.1767725 0.1843926
+    ##     16 -147.7833 0.638835  0.1767725 0.1843926
+    ##     17 -147.7833 0.638835  0.1767725 0.1843926
+    ##     18 -147.7833 0.638835  0.1767725 0.1843926
