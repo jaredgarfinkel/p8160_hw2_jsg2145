@@ -2,7 +2,7 @@
 title: "Homework 2 on Newton's methods"
 author: "Jared Garfinkel jsg2145"
 date: "Due: 03/18/2020, Wednesday, by 1pm"
-output: github_document
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
